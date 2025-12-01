@@ -1,6 +1,8 @@
-// ... (Setelah BarcodeToolContent atau konten alat terakhir lainnya)
+const NEPTU_HARI = { "Senin": 4, "Selasa": 3, "Rabu": 7, "Kamis": 8, "Jumat": 6, "Sabtu": 9, "Minggu": 5 };
+const NEPTU_PASARAN = { "Pahing": 9, "Pon": 7, "Wage": 4, "Kliwon": 8, "Legi": 5 };
+const JAVANESE_PASARAN = ["Pahing", "Pon", "Wage", "Kliwon", "Legi"];
+const HARI_SE_MINGGU = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-// Watak berdasarkan Neptu Total
 const WATAK_NEPTU = {
     7: 'Lakuning Bumi (Pendiam, introspektif, mudah memaafkan)',
     8: 'Lakuning Geni (Bersemangat, agresif, mudah marah)',
@@ -37,10 +39,6 @@ const GEBLAK_ARAH = {
     'Jumat': 'Timur (Hindari: Barat)',
     'Sabtu': 'Selatan (Hindari: Utara)',
 };
-const NEPTU_HARI = { "Senin": 4, "Selasa": 3, "Rabu": 7, "Kamis": 8, "Jumat": 6, "Sabtu": 9, "Minggu": 5 };
-
-// Neptu Pasaran (Pahing=9, Pon=7, ..., Legi=5) - Diurutkan berdasarkan hariPasaran C# (Pahing-Legi)
-const NEPTU_PASARAN = { "Pahing": 9, "Pon": 7, "Wage": 4, "Kliwon": 8, "Legi": 5 };
 
 const WATAK_HARI = {
     "Senin": "Peredaran Bulan: Senang pada kebenaran, ikhlas, cekatan dalam segala hal, bicaranya tidak dapat dipermainkan.",
@@ -76,6 +74,7 @@ const ZODIAC_DESC = [
 ];
 
 const CHINESE_ZODIAC_LIST = ["Rat/Tikus", "Ox/Lembu", "Tiger/Harimau", "Rabbit/Kelinci", "Dragon/Naga", "Snake/Ular", "Horse/Kuda", "Goat/Kambing", "Monkey/Monyet", "Rooster/Ayam Jantan", "Dog/Anjing", "Pig/Babi"];
+
 const CHINESE_ZODIAC_DESC = [
     "Cerdas, intuitif, dan gesit. Mereka sering kali cepat beradaptasi dan memiliki daya tarik yang alami.",
     "Kuat, dapat diandalkan, dan pekerja keras. Mereka memiliki ketekunan dan kesabaran yang luar biasa.",
@@ -134,10 +133,19 @@ const PrimbonToolContent = `
     <div class="bg-white p-6 rounded-xl shadow-lg space-y-8">
 
         <div class="flex border-b border-gray-200">
+
             <button data-primbon-tab="watak" class="primbon-tab-button py-2 px-4 text-sm font-medium border-b-2 border-red-500 text-red-600 transition duration-150">Primbon Watak</button>
+
             <button data-primbon-tab="jodoh" class="primbon-tab-button py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-red-600 hover:border-red-300 transition duration-150">Primbon Jodoh</button>
+
             <button data-primbon-tab="geblak" class="primbon-tab-button py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-red-600 hover:border-red-300 transition duration-150">Hitungan Geblak</button>
+
             <button data-primbon-tab="nikah" class="primbon-tab-button py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-red-600 hover:border-red-300 transition duration-150">Hari Nikah</button>
+
+            <button data-primbon-tab="pindah-rumah" class="primbon-tab-button py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-red-600 hover:border-red-300 transition duration-150">Pindah Rumah</button>
+
+            <button data-primbon-tab="cari-tanggal" class="primbon-tab-button py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-red-600 hover:border-red-300 transition duration-150">Cari Tanggal</button> 
+
         </div>
 
         <div id="primbon-tab-content">
@@ -193,10 +201,11 @@ const PRIMBON_WATAK_CONTENT = `
         </div>
     </div>
 
-    <div id="input-date-area">
-        <label for="watak-date-input" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir:</label>
-        <input type="date" id="watak-date-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
-    </div>
+<div id="input-date-area">
+    <label for="watak-date-input" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir:</label>
+    <input type="date" id="watak-date-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
+    <p id="watak-date-display" class="text-sm text-gray-500 mt-1"></p> 
+</div>
 
     <div id="input-weton-area" class="hidden">
         <label for="weton-select" class="block text-sm font-medium text-gray-700 mb-1">Pilih Weton:</label>
@@ -247,6 +256,7 @@ const PRIMBON_JODOH_CONTENT = `
             <div id="jodoh-date-pria">
                 <label for="jodoh-date-input-pria" class="block text-sm font-medium text-gray-700 mb-1">Tgl Lahir Pria:</label>
                 <input type="date" id="jodoh-date-input-pria" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
+                <p id="jodoh-date-display-pria" class="text-sm text-gray-500 mt-1"></p>
             </div>
 
             <div id="jodoh-weton-pria" class="hidden">
@@ -265,6 +275,7 @@ const PRIMBON_JODOH_CONTENT = `
             <div id="jodoh-date-wanita">
                 <label for="jodoh-date-input-wanita" class="block text-sm font-medium text-gray-700 mb-1">Tgl Lahir Wanita:</label>
                 <input type="date" id="jodoh-date-input-wanita" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
+                <p id="jodoh-date-display-wanita" class="text-sm text-gray-500 mt-1"></p>
             </div>
 
             <div id="jodoh-weton-wanita" class="hidden">
@@ -294,6 +305,7 @@ const PRIMBON_GEBLAK_CONTENT = `
         <div>
             <label for="geblak-date-input" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Meninggal:</label>
             <input type="date" id="geblak-date-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
+            <p id="geblak-date-display" class="text-sm text-gray-500 mt-1"></p>
         </div>
         <div>
             <label for="geblak-name-input" class="block text-sm font-medium text-gray-700 mb-1">Nama Almarhum/ah (Opsional):</label>
@@ -319,6 +331,7 @@ const PRIMBON_NIKAH_CONTENT = `
             <input type="text" id="nikah-name-pria" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 mb-4" placeholder="Pasangan Pria">
             <label for="nikah-date-input-pria" class="block text-sm font-medium text-gray-700 mb-1">Tgl Lahir Pria:</label>
             <input type="date" id="nikah-date-input-pria" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
+            <p id="nikah-date-display-pria" class="text-sm text-gray-500 mt-1"></p>
         </div>
 
         <div id="nikah-input-wanita">
@@ -326,6 +339,7 @@ const PRIMBON_NIKAH_CONTENT = `
             <input type="text" id="nikah-name-wanita" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 mb-4" placeholder="Pasangan Wanita">
             <label for="nikah-date-input-wanita" class="block text-sm font-medium text-gray-700 mb-1">Tgl Lahir Wanita:</label>
             <input type="date" id="nikah-date-input-wanita" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
+            <p id="nikah-date-display-wanita" class="text-sm text-gray-500 mt-1"></p>
         </div>
     </div>
 
@@ -345,6 +359,238 @@ const PRIMBON_NIKAH_CONTENT = `
         <p class="text-gray-600">Masukkan data kedua pasangan dan pilih harapan, lalu klik "Cari Hari Baik Nikah".</p>
     </div>
 `;
+
+const PRIMBON_PINDAH_RUMAH_CONTENT = `
+    <h3 class="text-xl font-semibold mb-4 text-red-700">Perhitungan Hari Pindah Rumah</h3>
+    <p class="text-sm text-gray-600 mb-6">Hitungan ini berdasarkan neptu tanggal lahir penghuni dan neptu hari kepindahan. Hasil dibagi menjadi 3 kategori: Rezeki (4-lipat), Watak Hari (6-lipat), dan Arah Pindah.</p>
+    
+    <div class="grid md:grid-cols-2 gap-6">
+        <div>
+            <label for="pindah-date-input-lahir" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir Penghuni:</label>
+            <input type="date" id="pindah-date-input-lahir" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" max="${new Date().toISOString().split('T')[0]}">
+            <p id="pindah-date-display-lahir" class="text-sm text-gray-500 mt-1"></p>
+        </div>
+
+        <div>
+            <label for="pindah-date-input-pindah" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Rencana Pindah:</label>
+            <input type="date" id="pindah-date-input-pindah" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+            <p id="pindah-date-display-pindah" class="text-sm text-gray-500 mt-1"></p>
+        </div>
+    </div>
+
+    <button id="hitung-pindah-btn" class="mt-6 w-full px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-150">
+        Hitung Kecocokan Hari Pindah
+    </button>
+    
+    <div id="pindah-result" class="mt-6 p-4 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-700 hidden">
+        </div>
+`;
+
+const PRIMBON_CARI_TANGGAL_CONTENT = (function() {
+    const hariOptions = HARI_SE_MINGGU.map(h => `<option value="${h}">${h}</option>`).join('');
+    const pasaranOptions = JAVANESE_PASARAN.map(p => `<option value="${p}">${p}</option>`).join('');
+    
+    const today = new Date();
+    // Format YYYY-MM untuk input 'month'
+    const defaultMonthYear = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+    const defaultYear = today.getFullYear();
+    
+    return `
+        <h3 class="text-xl font-semibold mb-4 text-red-700">Cari Tanggal Berdasarkan Weton</h3>
+        <p class="text-sm text-gray-600 mb-4">Temukan semua tanggal yang cocok dengan Weton pilihan Anda dalam rentang waktu tertentu.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="space-y-1">
+                <label for="pickerHariTanggal" class="block text-sm font-medium text-gray-700">Pilih Hari</label>
+                <select id="pickerHariTanggal" class="w-full p-2 border border-gray-300 rounded-lg">
+                    <option value="">-- Pilih Hari --</option>
+                    ${hariOptions}
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="pickerPasaranTanggal" class="block text-sm font-medium text-gray-700">Pilih Pasaran</label>
+                <select id="pickerPasaranTanggal" class="w-full p-2 border border-gray-300 rounded-lg">
+                    <option value="">-- Pilih Pasaran --</option>
+                    ${pasaranOptions}
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="pickerRentangTanggal" class="block text-sm font-medium text-gray-700">Pilih Rentang</label>
+                <select id="pickerRentangTanggal" class="w-full p-2 border border-gray-300 rounded-lg" onchange="toggleRentangInput()">
+                    <option value="">-- Pilih Rentang Waktu --</option>
+                    <option value="bulan">Bulan dan Tahun</option>
+                    <option value="tahun">Tahun</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="divInputBulanTahun" class="space-y-1 mb-6 hidden">
+            <label for="inputBulanTahun" class="block text-sm font-medium text-gray-700">Bulan dan Tahun</label>
+            <input type="month" id="inputBulanTahun" class="w-full p-2 border border-gray-300 rounded-lg" value="${defaultMonthYear}">
+        </div>
+
+        <div id="divInputTahun" class="space-y-1 mb-6 hidden">
+            <label for="inputTahun" class="block text-sm font-medium text-gray-700">Tahun</label>
+            <input type="number" id="inputTahun" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Masukkan Tahun (mis. 2024)" value="${defaultYear}" min="1900" max="2100">
+        </div>
+
+        <button onclick="cariTanggalWeton()" class="w-full bg-red-800 text-white font-bold py-2 rounded-lg hover:bg-red-700 transition duration-200">
+            Cari Tanggal
+        </button>
+
+        <div id="hasilCariTanggal" class="mt-6 p-4 border border-gray-200 rounded-xl bg-gray-50 min-h-20">
+            <p class="text-gray-500">Hasil pencarian akan muncul di sini.</p>
+        </div>
+    `;
+})();
+
+function InitCariTanggalContent() {
+    const tabContentArea = document.getElementById('primbon-tab-content');
+    tabContentArea.innerHTML = PRIMBON_CARI_TANGGAL_CONTENT;
+    // Jika Anda menggunakan lucide atau library ikon lain, panggil di sini
+    // lucide.createIcons();
+}
+/**
+ * Fungsi untuk mengubah visibilitas input rentang waktu.
+ */
+function toggleRentangInput() {
+    const rentangPilihan = document.getElementById('pickerRentangTanggal').value;
+    const inputBulanTahunDiv = document.getElementById('divInputBulanTahun');
+    const inputTahunDiv = document.getElementById('divInputTahun');
+
+    // Sembunyikan semua
+    inputBulanTahunDiv.classList.add('hidden');
+    inputTahunDiv.classList.add('hidden');
+
+    // Tampilkan sesuai pilihan
+    if (rentangPilihan === 'bulan') {
+        inputBulanTahunDiv.classList.remove('hidden');
+    } else if (rentangPilihan === 'tahun') {
+        inputTahunDiv.classList.remove('hidden');
+    }
+}
+
+/**
+ * Fungsi utama yang dipanggil saat tombol "Cari Tanggal" diklik.
+ */
+function cariTanggalWeton() {
+    const targetDay = document.getElementById('pickerHariTanggal').value;
+    const targetPasaran = document.getElementById('pickerPasaranTanggal').value;
+    const rentangPilihan = document.getElementById('pickerRentangTanggal').value;
+
+    if (!targetDay || !targetPasaran || !rentangPilihan) {
+        alert("Harap lengkapi Hari, Pasaran, dan Rentang Pilihan.");
+        return;
+    }
+
+    let startDate, endDate;
+    let valid = true;
+    
+    // Tentukan rentang pencarian
+    if (rentangPilihan === 'bulan') {
+        const bulanTahunInput = document.getElementById('inputBulanTahun').value;
+        const [yearStr, monthStr] = bulanTahunInput.split('-');
+        const year = parseInt(yearStr);
+        const month = parseInt(monthStr);
+        
+        if (isNaN(year) || isNaN(month)) {
+            alert("Format Bulan dan Tahun tidak valid.");
+            valid = false;
+        } else {
+            // Bulan di JS 0-indexed (Januari=0), input month HTML 1-indexed
+            startDate = new Date(year, month - 1, 1);
+            // Hari ke-0 dari bulan berikutnya = hari terakhir bulan ini
+            endDate = new Date(year, month, 0); 
+        }
+    } else if (rentangPilihan === 'tahun') {
+        const tahunInput = document.getElementById('inputTahun').value;
+        const year = parseInt(tahunInput);
+        
+        if (isNaN(year)) { 
+            alert("Input Tahun tidak valid.");
+            valid = false;
+        } else {
+            startDate = new Date(year, 0, 1); // 1 Jan
+            endDate = new Date(year, 11, 31); // 31 Dec
+        }
+    }
+
+    if (!valid) return;
+    
+    // Lakukan Pencarian
+    const matchingDates = findMatchingDates(targetDay, targetPasaran, startDate, endDate);
+
+    // Tampilkan Hasil
+    const hasilDiv = document.getElementById('hasilCariTanggal');
+    let outputHTML = '';
+
+    if (matchingDates.length > 0) {
+        const startFormatted = startDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+        const endFormatted = endDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        outputHTML += `<p class="text-lg font-medium text-green-700 mb-3">Ditemukan <b class="text-green-900">${matchingDates.length}</b> tanggal dengan Weton <b class="text-green-900">${targetDay} ${targetPasaran}</b> antara ${startFormatted} dan ${endFormatted}:</p>`;
+        outputHTML += '<div class="grid grid-cols-2 md:grid-cols-4 gap-2">';
+        
+        matchingDates.forEach(date => {
+            const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+            outputHTML += `<div class="p-2 bg-gray-100 rounded-md text-sm">${formattedDate}</div>`;
+        });
+        
+        outputHTML += '</div>';
+    } else {
+        outputHTML = `<p class="text-lg font-medium text-red-500">Tidak ditemukan tanggal dengan Weton <b class="text-green-900">${targetDay} ${targetPasaran}</b> dalam rentang waktu yang dipilih.</p>`;
+    }
+    
+    hasilDiv.innerHTML = outputHTML;0-0-0
+}
+function setupDateConfirmation(inputId, displayId) {
+    const dateInput = document.getElementById(inputId);
+    const dateDisplay = document.getElementById(displayId);
+
+    if (!dateInput || !dateDisplay) return;
+
+    // Opsi format tanggal Indonesia (Tanggal, Bulan Panjang, Tahun)
+    const ID_LONG_DATE_OPTIONS = { day: 'numeric', month: 'long', year: 'numeric' };
+
+    // Fungsi untuk memperbarui tampilan
+    const updateDisplay = () => {
+        const dateValue = dateInput.value; // Nilai selalu YYYY-MM-DD
+
+        if (dateValue) {
+            try {
+                // Konversi string YYYY-MM-DD menjadi objek Date
+                const date = new Date(dateValue);
+
+                // Pastikan date object valid sebelum memformat
+                if (isNaN(date.getTime())) {
+                    dateDisplay.textContent = 'Format tanggal tidak valid.';
+                    dateDisplay.classList.add('text-red-500');
+                    return;
+                }
+
+                // Format ke format Indonesia yang diinginkan
+                const formattedDate = date.toLocaleDateString('id-ID', ID_LONG_DATE_OPTIONS);
+
+                dateDisplay.textContent = `${formattedDate}`;
+                dateDisplay.classList.remove('text-red-500');
+
+            } catch (e) {
+                dateDisplay.textContent = 'Error pemrosesan tanggal.';
+                dateDisplay.classList.add('text-red-500');
+            }
+        } else {
+            dateDisplay.textContent = '';
+        }
+    };
+
+    // Tambahkan event listener agar tampilan diperbarui saat nilai berubah
+    dateInput.addEventListener('change', updateDisplay);
+
+    // Jalankan sekali saat inisialisasi jika ada nilai default
+    updateDisplay();
+}
 
 function hitungHariPeringatan(tanggalMeninggal) {
     const tanggalAcuan = new Date(tanggalMeninggal);
@@ -579,6 +825,12 @@ function initPrimbon() {
         } else if (tabKey === 'nikah') {
             tabContentArea.innerHTML = PRIMBON_NIKAH_CONTENT;
             initNikahPrimbon();
+        } else if (tabKey === 'pindah-rumah') {
+            tabContentArea.innerHTML = PRIMBON_PINDAH_RUMAH_CONTENT;
+            initPindahRumahPrimbon();
+        } else if (tabKey === 'cari-tanggal') {
+            tabContentArea.innerHTML = PRIMBON_CARI_TANGGAL_CONTENT;
+            InitCariTanggalContent();
         }
         lucide.createIcons();
     }
@@ -720,6 +972,69 @@ const JODOH_BETALJEMUR_HARI = {
     "6-6": "Sering Sakit" // Min-Min
 };
 
+function getJavanesePasaran(date) {
+    const epochNormalized = new Date(1900, 0, 1); // 1 Jan 1900 (Epoch Primbon Jawa)
+    const dateNormalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    const oneDay = 1000 * 60 * 60 * 24;
+    const diffTime = dateNormalized.getTime() - epochNormalized.getTime();
+    const diffDays = Math.floor(diffTime / oneDay); 
+    
+    // Pasaran index: (days since 1/1/1900) % 5
+    const pasaranIndex = diffDays % 5; 
+    const normalizedIndex = pasaranIndex < 0 ? pasaranIndex + 5 : pasaranIndex; 
+    
+    const pasaranName = JAVANESE_PASARAN[normalizedIndex];
+    
+    return { name: pasaranName, neptu: NEPTU_PASARAN[pasaranName] };
+}
+
+/**
+ * Mendapatkan nama Hari Indonesia dari objek Date.
+ */
+function getIndonesianDayName(date) {
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    return dayNames[date.getDay()];
+}
+
+/**
+ * Fungsi untuk mendapatkan data Weton lengkap dari suatu objek Date.
+ */
+function getWeton(date) {
+    const dayName = getIndonesianDayName(date);
+    const dayNeptu = NEPTU_HARI[dayName];
+    const pasaran = getJavanesePasaran(date);
+    
+    return {
+        day: dayName,
+        pasaran: pasaran.name,
+        weton: `${dayName} ${pasaran.name}`,
+        dayNeptu: dayNeptu,
+        pasaranNeptu: pasaran.neptu,
+        totalNeptu: dayNeptu + pasaran.neptu
+    };
+}
+
+/**
+ * Fungsi utama untuk mencari semua tanggal yang cocok dengan Weton target dalam rentang.
+ */
+function findMatchingDates(targetDay, targetPasaran, startDate, endDate) {
+    let results = [];
+    let currentDate = new Date(startDate); 
+    
+    while (currentDate <= endDate) {
+        const wetonData = getWeton(currentDate);
+        
+        if (wetonData.day === targetDay && wetonData.pasaran === targetPasaran) {
+            results.push(new Date(currentDate)); 
+        }
+        
+        currentDate.setDate(currentDate.getDate() + 1); 
+    }
+    
+    return results;
+}
+
 // Logika Tab Watak
 function initWatakPrimbon() {
     const dateInput = document.getElementById('watak-date-input');
@@ -845,6 +1160,7 @@ function initWatakPrimbon() {
             ageResultDiv.innerHTML = `<div class="text-left w-full">${ageOutputText.trim().replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>`;
         }
     });
+    setupDateConfirmation('watak-date-input', 'watak-date-display');
 }
 
 // Logika Tab Jodoh
@@ -1027,6 +1343,8 @@ function initJodohPrimbon() {
 
         resultDiv.innerHTML = `<div class="text-left w-full">${outputText.trim().replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>`;
     });
+    setupDateConfirmation('jodoh-date-input-pria', 'jodoh-date-display-pria');
+    setupDateConfirmation('jodoh-date-input-wanita', 'jodoh-date-display-wanita');
 }
 
 function initNikahPrimbon() {
@@ -1145,6 +1463,9 @@ function initNikahPrimbon() {
             </div>
         `;
     });
+    setupDateConfirmation('nikah-date-input-pria', 'nikah-date-display-pria');
+    setupDateConfirmation('nikah-date-input-wanita', 'nikah-date-display-wanita');
+
 }
 function initGeblakPrimbon() {
     const dateInput = document.getElementById('geblak-date-input');
@@ -1199,5 +1520,176 @@ function initGeblakPrimbon() {
         resultDiv.innerHTML = `
             <div class="text-left w-full">${outputText.trim().replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>`;
     });
+    setupDateConfirmation('geblak-date-input', 'geblak-date-display');
+}
+function getWetonFromDatePindahRumah(date) {
+    // 1 Jan 1900, 00:00:00 UTC (Untuk perhitungan selisih hari)
+    const EPOCH = new Date('1900-01-01T00:00:00Z');
+    // Normalisasi tanggal input ke tengah malam lokal
+    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
+    // Hitung selisih hari
+    const msPerDay = 1000 * 60 * 60 * 24;
+    // Math.floor untuk memastikan pembulatan ke bawah (selisih hari penuh)
+    const daysSinceEpoch = Math.floor((targetDate.getTime() - EPOCH.getTime()) / msPerDay);
+
+    // Day names (0=Senin, ..., 6=Minggu)
+    const hariSeminggu = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+    // Pasaran names (0=Pahing, ..., 4=Legi)
+    const hariPasaran = ["Pahing", "Pon", "Wage", "Kliwon", "Legi"];
+
+    // Neptu arrays (sesuai urutan C# logic: Senin, Selasa, dst; Pahing, Pon, dst)
+    // Neptu Hari (4-lipat)
+    const neptuHari = [4, 3, 7, 8, 6, 9, 5];
+    // Neptu Pasaran (4-lipat)
+    const neptuPasaran = [9, 7, 4, 8, 5];
+    // Neptu Hari (6-lipat)
+    const neptuHari6 = [4, 5, 6, 7, 1, 2, 3];
+    // Neptu Pasaran (6-lipat)
+    const neptuPasaran6 = [3, 4, 5, 1, 2];
+
+    // Indeks (modulo 7 dan 5)
+    const indeksHari = (daysSinceEpoch % 7 + 7) % 7;
+    const indeksPasaran = (daysSinceEpoch % 5 + 5) % 5;
+
+    const hari = hariSeminggu[indeksHari];
+    const pasaran = hariPasaran[indeksPasaran];
+
+    const totalNeptu = neptuHari[indeksHari] + neptuPasaran[indeksPasaran];
+    const totalNeptu6 = neptuHari6[indeksHari] + neptuPasaran6[indeksPasaran];
+
+    return {
+        weton: `${hari} ${pasaran}`,
+        totalNeptu, // Neptu 4-lipat
+        totalNeptu6 // Neptu 6-lipat
+    };
+}
+
+
+// ===============================================
+// FUNGSI INTI PINDAH RUMAH
+// ===============================================
+
+function initPindahRumahPrimbon() {
+    // Memastikan konfirmasi tanggal DD MMMM YYYY dipasang (dari permintaan sebelumnya)
+    setupDateConfirmation('pindah-date-input-lahir', 'pindah-date-display-lahir');
+    setupDateConfirmation('pindah-date-input-pindah', 'pindah-date-display-pindah');
+
+    const lahirInput = document.getElementById('pindah-date-input-lahir');
+    const pindahInput = document.getElementById('pindah-date-input-pindah');
+    const hitungBtn = document.getElementById('hitung-pindah-btn');
+    const resultDiv = document.getElementById('pindah-result');
+
+    if (!hitungBtn) return;
+
+    // Mapping Hasil 4-Lipat
+    const CATEGORIES_4_KET = {
+        1: { nama: "Guru", ket: "Lancar Rezeki, dihormati, selamat dan sejahtera" },
+        2: { nama: "Ratu", ket: "Banyak rezeki, dijauhkan dari gara-gara dan berwibawa" },
+        3: { nama: "Rogoh", ket: "Sering mengalami pencurian, rumah tangga kurang harmonis dan tidak bahagia" },
+        4: { nama: "Sempoyong", ket: "Tidak betah dirumah, sering mengalami kesusahan dan sering bertengkar" }
+    };
+
+    // Mapping Hasil 6-Lipat
+    const CATEGORIES_6_KET = {
+        1: { nama: "Pitutur", ket: "Banyak masalah" },
+        2: { nama: "Demangkanduruan", ket: "Selalu/Sering Sakit" },
+        3: { nama: "Satryapinayungan", ket: "Keinginan akan tercapai, dicintai serta dihormati orang lain" },
+        4: { nama: "Mantrisinaroja", ket: "Disukai orang" },
+        5: { nama: "Macanketawang", ket: "Sering cekcok dan mempermasalahkan suatu hal" },
+        6: { nama: "Nujupati", ket: "Sengsara, selalu berduka" }
+    };
+
+    // Mapping Arah Pindah (Indeks 0-11, Neptu 7-18)
+    const ARAH_BAIK = [
+        'Barat', 'Utara', 'Timur', 'Selatan', 'Timur', 'Barat',
+        'Utara', 'Selatan', 'Barat', 'Selatan', 'Barat', 'Utara'
+    ];
+
+
+    hitungBtn.addEventListener('click', () => {
+        const tglLahirStr = lahirInput.value;
+        const tglPindahStr = pindahInput.value;
+
+        if (!tglLahirStr || !tglPindahStr) {
+            resultDiv.innerHTML = `<p class="text-red-600 font-bold">Harap masukkan kedua tanggal.</p>`;
+            resultDiv.classList.remove('hidden');
+            return;
+        }
+
+        const tglLahir = new Date(tglLahirStr);
+        const tglPindah = new Date(tglPindahStr);
+
+        // Ambil data Neptu menggunakan helper spesifik
+        const wetonLahir = getWetonFromDatePindahRumah(tglLahir);
+        const wetonPindah = getWetonFromDatePindahRumah(tglPindah);
+
+        const hasil1 = wetonLahir.totalNeptu; // Neptu Lahir (4-lipat)
+        const hasil2 = wetonPindah.totalNeptu; // Neptu Pindah (4-lipat)
+        const hasil6 = wetonPindah.totalNeptu6; // Neptu Pindah (6-lipat)
+
+        // --- 1. Hitungan Rezeki (4-Lipat) ---
+        const hasil = hasil1 + hasil2;
+        const hasilCari = hasil - (hasil % 4);
+        let hasilHitung = hasil - hasilCari;
+        if (hasilHitung === 0) {
+            hasilHitung = 4;
+        }
+
+        const kategori4 = CATEGORIES_4_KET[hasilHitung];
+
+        // --- 2. Hitungan Watak Hari (6-Lipat) ---
+        let hasilhari6 = hasil6 % 6;
+        if (hasilhari6 === 0) {
+            hasilhari6 = 6;
+        }
+
+        const kategori6 = CATEGORIES_6_KET[hasilhari6];
+
+        // --- 3. Hitungan Arah Pindah ---
+        let outputArah = '';
+        if (hasil2 >= 7 && hasil2 <= 18) {
+            const arahIndex = hasil2 - 7; // Hasil 7 -> Indeks 0, Hasil 18 -> Indeks 11
+            outputArah = ARAH_BAIK[arahIndex];
+        } else {
+            outputArah = 'Tidak Dihitung (Neptu hari pindah di luar rentang 7-18)';
+        }
+
+        // --- Tampilkan Hasil ---
+        let outputText = `
+            <p class="text-lg font-bold text-red-700 mb-4">Hasil Perhitungan Pindah Rumah</p>
+
+            <p class="mb-4">
+                <span class="font-semibold">Weton Penghuni:</span> ${wetonLahir.weton} (Neptu: ${hasil1})<br>
+                <span class="font-semibold">Hari Pindah:</span> ${wetonPindah.weton} (Neptu: ${hasil2})<br>
+                <span class="font-semibold">Total Neptu:</span> ${hasil}
+            </p>
+
+            <div class="space-y-4">
+                <div class="border-b pb-4">
+                    <p class="font-bold text-base text-red-600">1. Kecocokan Rezeki (Hitungan 4-Lipat)</p>
+                    <p>Hasil hitung neptu dibagi 4 adalah: <b class="text-xl text-red-700">${kategori4.nama}</b></p>
+                    <p class="text-sm text-gray-600">${kategori4.ket}</p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        (Perhitungan: ${hasil1} + ${hasil2} = ${hasil}. Hasil Modulo 4 = ${hasilHitung})
+                    </p>
+                </div>
+
+                <div class="border-b pb-4">
+                    <p class="font-bold text-base text-red-600">2. Watak Hari Pindah (Hitungan 6-Lipat)</p>
+                    <p>Watak hari pindah (${wetonPindah.weton}) adalah: <b class="text-xl text-red-700">${kategori6.nama}</b></p>
+                    <p class="text-sm text-gray-600">(${kategori6.ket})</p>
+                </div>
+
+                <div>
+                    <p class="font-bold text-base text-red-600">3. Arah Pindah yang Baik</p>
+                    <p>Arah pindah yang baik (berdasarkan Neptu Hari Pindah ${hasil2}): <b class="text-xl text-red-700">${outputArah}</b></p>
+                    ${outputArah.includes('Tidak Dihitung') ? '' : '<p class="text-sm text-gray-600">Disarankan untuk pindah rumah ke arah ini.</p>'}
+                </div>
+            </div>
+        `;
+
+        resultDiv.innerHTML = outputText;
+        resultDiv.classList.remove('hidden');
+    });
 }

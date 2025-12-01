@@ -214,7 +214,175 @@ const BARCODE_READER_CONTENT = `
     <textarea id="barcode-reader-output" rows="2" readonly class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm"></textarea>
 `;
 
+const HIBPCheckContent = `
+    <h2 class="text-2xl font-bold text-red-700 mb-4">HIBP Check (Periksa Kebocoran Kata Sandi)</h2>
+    <div class="bg-white p-6 rounded-xl shadow-lg">
+        <p class="text-sm text-gray-600 mb-4">Periksa apakah kata sandi Anda pernah bocor dalam pelanggaran data publik. Aplikasi hanya mengirimkan 5 karakter pertama dari hash SHA-1 kata sandi Anda.</p>
+        
+        <label for="hibp-password-input" class="block text-sm font-medium text-gray-700 mb-2">Masukkan Kata Sandi:</label>
+        <div class="relative mb-4">
+            <input type="password" id="hibp-password-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" placeholder="Kata sandi yang ingin dicek">
+            <button type="button" id="toggle-password-hibp" class="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-800">
+                <i data-lucide="eye" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <button id="check-hibp-btn" class="w-full px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-150 shadow-md">
+            Cek Kebocoran
+        </button>
+        
+        <div id="hibp-result" class="mt-6 p-4 rounded-lg min-h-[50px] flex items-center justify-center whitespace-pre-wrap">
+            <p class="text-gray-600">Tekan "Cek Kebocoran" untuk memulai.</p>
+        </div>
+    </div>
+    <button class="mt-6 text-red-600 font-medium hover:text-red-800 flex items-center text-sm" onclick="renderPage('tools')">
+        &larr; Kembali ke Daftar Tools
+    </button>
+`;
+const PasswordGeneratorContent = `
+    <h2 class="text-2xl font-bold text-indigo-700 mb-4">Password Generator (Generator Kata Sandi)</h2>
+    <div class="bg-white p-6 rounded-xl shadow-lg">
+        
+        <div class="mb-4">
+            <label for="password-length" class="block text-sm font-medium text-gray-700 mb-2">Panjang Kata Sandi (6-128):</label>
+            <input type="range" id="password-length" min="6" max="128" value="16" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            <div class="text-center text-indigo-700 font-semibold mt-1" id="length-display">16</div>
+        </div>
 
+        <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="gen-uppercase" checked class="form-checkbox text-indigo-600">
+                <span class="ml-2 text-gray-700">Huruf Besar (A-Z)</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="gen-lowercase" checked class="form-checkbox text-indigo-600">
+                <span class="ml-2 text-gray-700">Huruf Kecil (a-z)</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="gen-numbers" checked class="form-checkbox text-indigo-600">
+                <span class="ml-2 text-gray-700">Angka (0-9)</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="gen-common-symbols" checked class="form-checkbox text-indigo-600">
+                <span class="ml-2 text-gray-700">Simbol Umum (!@#$)</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="gen-unique-symbols" class="form-checkbox text-indigo-600">
+                <span class="ml-2 text-gray-700">Simbol Unik (&*^%)</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="gen-readable" class="form-checkbox text-indigo-600">
+                <span class="ml-2 text-gray-700">Mudah Dibaca</span>
+            </label>
+        </div>
+
+        <button id="generate-btn" class="w-full px-4 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+            Generate Kata Sandi
+        </button>
+
+        <div id="password-result-container" class="mt-6 hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Kata Sandi Baru:</label>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="password-output" readonly class="w-full p-3 border border-gray-300 rounded-lg font-mono text-lg select-all bg-gray-50">
+                <button id="copy-password-btn" class="p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">
+                    <i data-lucide="copy" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p id="password-strength" class="mt-2 text-sm font-semibold"></p>
+        </div>
+    </div>
+    <button class="mt-6 text-indigo-600 font-medium hover:text-indigo-800 flex items-center text-sm" onclick="renderPage('tools')">
+        &larr; Kembali ke Daftar Tools
+    </button>
+`;
+async function sha1(str) {
+    const buffer = new TextEncoder("utf-8").encode(str);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex.toUpperCase();
+}
+function initHIBPCheck() {
+    const passwordInput = document.getElementById('hibp-password-input');
+    const checkBtn = document.getElementById('check-hibp-btn');
+    const resultDiv = document.getElementById('hibp-result');
+    const toggleBtn = document.getElementById('toggle-password-hibp');
+
+    if (!checkBtn) return;
+
+    // Toggle tampilan password
+    toggleBtn.addEventListener('click', () => {
+        const type = passwordInput.type === 'password' ? 'text' : 'password';
+        passwordInput.type = type;
+        const icon = type === 'password' ? 'eye' : 'eye-off';
+        // Asumsi Anda menggunakan library ikon seperti Lucide, ganti ikon di sini
+        toggleBtn.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i>`; 
+    });
+
+    checkBtn.addEventListener('click', async () => {
+        const password = passwordInput.value.trim();
+        if (password.length < 4) {
+            resultDiv.innerHTML = `<p class="text-red-600 font-bold">Kata sandi minimal 4 karakter.</p>`;
+            resultDiv.classList.add('bg-red-100');
+            return;
+        }
+
+        checkBtn.disabled = true;
+        checkBtn.textContent = 'Menghitung Hash & Mengecek...';
+        resultDiv.classList.remove('bg-green-100', 'bg-red-100', 'border-red-300', 'border-green-300');
+        resultDiv.innerHTML = `<p class="text-gray-600">Menganalisis...</p>`;
+
+        try {
+            const hash = await sha1(password);
+            const prefix = hash.substring(0, 5);
+            const suffix = hash.substring(5);
+
+            const apiUrl = `https://api.pwnedpasswords.com/range/${prefix}`;
+
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                throw new Error('Gagal mengakses API HIBP.');
+            }
+
+            const text = await response.text();
+            
+            // Mencari suffix (sisa hash) dalam respons
+            const lines = text.split('\r\n');
+            let foundCount = 0;
+            
+            for (const line of lines) {
+                const [lineSuffix, count] = line.split(':');
+                if (lineSuffix === suffix) {
+                    foundCount = parseInt(count, 10);
+                    break;
+                }
+            }
+
+            if (foundCount > 0) {
+                resultDiv.innerHTML = `
+                    <p class="text-red-700 font-bold text-center">❌ BAHAYA! Kata sandi ini telah bocor</p><br>
+                    <p class="text-center mt-2">Ditemukan <b>${foundCount.toLocaleString()}</b> kali dalam pelanggaran data. Segera ganti kata sandi Anda!</p>
+                `;
+                resultDiv.classList.add('bg-red-100', 'border', 'border-red-300');
+            } else {
+                resultDiv.innerHTML = `
+                    <p class="text-green-700 font-bold text-center">✅ AMAN! Tidak ditemukan dalam database kebocoran HIBP.</p><br>
+                    <p class="text-center mt-2">Selalu gunakan kata sandi unik dan kuat.</p>
+                `;
+                resultDiv.classList.add('bg-green-100', 'border', 'border-green-300');
+            }
+
+        } catch (error) {
+            console.error(error);
+            resultDiv.innerHTML = `<p class="text-red-700">Terjadi kesalahan: ${error.message}</p>`;
+            resultDiv.classList.add('bg-red-100');
+        } finally {
+            checkBtn.disabled = false;
+            checkBtn.textContent = 'Cek Kebocoran';
+        }
+    });
+}
 // --- FUNGSI UTAMA QR CODE & BARCODE ---
 
 let qrCodeScanner = null; // Instansi global untuk scanner
@@ -391,10 +559,6 @@ function initQrBarcodeReader(readerAreaId, fileInputId, outputId) {
         });
     }
 
-    // Fungsi untuk memindai dari file
-    // --- FUNGSI UNTUK MEMINDAI DARI FILE ---
-    // --- FUNGSI UNTUK MEMINDAI DARI FILE (VERSI PERBAIKAN) ---
-    // --- FUNGSI UNTUK MEMINDAI DARI FILE (VERSI FINAL FIX) ---
     function startFileScan(fileInput, output) {
         const readerArea = document.getElementById(fileInput.id.replace('-file-input', '-reader-area'));
 
@@ -579,17 +743,25 @@ function loadTool(toolKey) {
             content = CryptoToolsContent;
             pageTitleElement.textContent = 'Kriptografi & Hash';
             break;
-        case 'qr-code-tool': // TAMBAHAN BARU
+        case 'qr-code-tool':
             content = QRCodeToolContent;
             pageTitleElement.textContent = 'QR Code Tool';
             break;
-        case 'barcode-tool': // TAMBAHAN BARU
+        case 'barcode-tool':
             content = BarcodeToolContent;
             pageTitleElement.textContent = 'Barcode Tool';
             break;
-        case 'primbon-tool': // TAMBAHAN BARU
+        case 'primbon-tool':
             content = PrimbonToolContent;
             pageTitleElement.textContent = 'Primbon Jawa';
+            break;
+        case 'hibp-check':
+            content = HIBPCheckContent;
+            pageTitleElement.textContent = 'HIBP Check';
+            break;
+        case 'password-generator':
+            content = PasswordGeneratorContent;
+            pageTitleElement.textContent = 'Password Generator';
             break;
         default:
             return;
@@ -612,6 +784,10 @@ function loadTool(toolKey) {
         initBarcodeTool();
     } else if (toolKey === 'primbon-tool') {
         initPrimbon();
+    } else if (toolKey === 'hibp-check') {
+        initHIBPCheck();
+    } else if (toolKey === 'password-generator') {
+        initPasswordGenerator();
     }
 }
 
@@ -632,7 +808,7 @@ const BITLY_DATE_KEY = 'bitlyLastResetDate';
 function checkAndResetBitlyCount() {
     const today = new Date();
     const lastResetDateStr = localStorage.getItem(BITLY_DATE_KEY);
-    
+
     let currentCount = parseInt(localStorage.getItem(BITLY_COUNT_KEY)) || 0;
     let needsReset = true;
 
@@ -650,7 +826,7 @@ function checkAndResetBitlyCount() {
         localStorage.setItem(BITLY_COUNT_KEY, currentCount);
         localStorage.setItem(BITLY_DATE_KEY, today.toISOString());
     }
-    
+
     return currentCount;
 }
 
@@ -687,7 +863,141 @@ function incrementBitlyCount(currentCount) {
     localStorage.setItem(BITLY_COUNT_KEY, newCount);
     updateBitlyUI(newCount); // Perbarui tampilan setelah increment
 }
+function initPasswordGenerator() {
+    const lengthInput = document.getElementById('password-length');
+    const lengthDisplay = document.getElementById('length-display');
+    const generateBtn = document.getElementById('generate-btn');
+    const outputInput = document.getElementById('password-output');
+    const copyBtn = document.getElementById('copy-password-btn');
+    const resultContainer = document.getElementById('password-result-container');
 
+    // Update tampilan panjang saat slider digeser
+    lengthInput.addEventListener('input', () => {
+        lengthDisplay.textContent = lengthInput.value;
+    });
+
+    if (!generateBtn) return;
+
+    // --- Karakter Set ---
+    const CHARS = {
+        lowercase: 'abcdefghijklmnopqrstuvwxyz',
+        uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        numbers: '0123456789',
+        commonSymbols: '!@#$%^&*',
+        uniqueSymbols: '(){}[]=-_+.?><|~`' // Diperluas
+    };
+
+    // Karakter yang mudah membingungkan/mirip (untuk opsi "Mudah Dibaca")
+    const AMBIGUOUS_CHARS = 'l1oO0i';
+
+
+    // Fungsi utama Generator
+    generateBtn.addEventListener('click', () => {
+        const length = parseInt(lengthInput.value, 10);
+        const includeUpper = document.getElementById('gen-uppercase').checked;
+        const includeLower = document.getElementById('gen-lowercase').checked;
+        const includeNumbers = document.getElementById('gen-numbers').checked;
+        const includeCommon = document.getElementById('gen-common-symbols').checked;
+        const includeUnique = document.getElementById('gen-unique-symbols').checked;
+        const isReadable = document.getElementById('gen-readable').checked;
+
+        let availableChars = '';
+        let requiredChars = []; // Memastikan setidaknya satu karakter dari setiap jenis yang dipilih ada
+
+        if (includeUpper) {
+            availableChars += CHARS.uppercase;
+            requiredChars.push(getRandomChar(CHARS.uppercase));
+        }
+        if (includeLower) {
+            availableChars += CHARS.lowercase;
+            requiredChars.push(getRandomChar(CHARS.lowercase));
+        }
+        if (includeNumbers) {
+            availableChars += CHARS.numbers;
+            requiredChars.push(getRandomChar(CHARS.numbers));
+        }
+        if (includeCommon) {
+            availableChars += CHARS.commonSymbols;
+            requiredChars.push(getRandomChar(CHARS.commonSymbols));
+        }
+        if (includeUnique) {
+            availableChars += CHARS.uniqueSymbols;
+            requiredChars.push(getRandomChar(CHARS.uniqueSymbols));
+        }
+
+        // Hapus karakter yang ambigu jika opsi "Mudah Dibaca" dipilih
+        if (isReadable) {
+            AMBIGUOUS_CHARS.split('').forEach(char => {
+                availableChars = availableChars.replace(new RegExp(char, 'g'), '');
+            });
+        }
+
+        if (availableChars.length === 0) {
+            alert("Pilih setidaknya satu jenis karakter untuk membuat kata sandi.");
+            return;
+        }
+
+        // Fungsi helper untuk mendapatkan karakter acak
+        function getRandomChar(charSet) {
+            return charSet[Math.floor(Math.random() * charSet.length)];
+        }
+
+        let password = '';
+
+        // 1. Masukkan karakter yang diperlukan (untuk memastikan keragaman)
+        requiredChars.forEach(char => {
+            // Masukkan secara acak ke dalam password
+            const index = Math.floor(Math.random() * (password.length + 1));
+            password = password.slice(0, index) + char + password.slice(index);
+        });
+
+        // 2. Isi sisa panjang kata sandi
+        while (password.length < length) {
+            password += getRandomChar(availableChars);
+        }
+
+        // 3. Acak seluruh string sekali lagi untuk distribusi yang lebih baik
+        password = password.split('').sort(() => 0.5 - Math.random()).join('');
+
+        // Output dan Kekuatan
+        outputInput.value = password;
+        resultContainer.classList.remove('hidden');
+        displayPasswordStrength(password);
+    });
+
+    // Fungsi untuk menampilkan kekuatan password (Contoh sederhana)
+    function displayPasswordStrength(password) {
+        // Implementasi sederhana: Cek panjang dan keragaman karakter
+        const strengthDisplay = document.getElementById('password-strength');
+        let score = 0;
+        if (password.length >= 8) score += 1;
+        if (password.length >= 12) score += 1;
+        if (/[A-Z]/.test(password)) score += 1;
+        if (/[a-z]/.test(password)) score += 1;
+        if (/[0-9]/.test(password)) score += 1;
+        if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+        let level, color;
+        if (score <= 2) {
+            level = "Sangat Lemah"; color = "text-red-600";
+        } else if (score <= 4) {
+            level = "Sedang"; color = "text-yellow-600";
+        } else {
+            level = "Sangat Kuat"; color = "text-green-600";
+        }
+
+        strengthDisplay.textContent = `Kekuatan: ${level}`;
+        strengthDisplay.className = `mt-2 text-sm font-semibold ${color}`;
+    }
+
+    // Fungsi Copy
+    copyBtn.addEventListener('click', () => {
+        outputInput.select();
+        navigator.clipboard.writeText(outputInput.value)
+            .then(() => alert('Kata sandi berhasil disalin!'))
+            .catch(() => alert('Gagal menyalin kata sandi.'));
+    });
+}
 
 function initURLShortener() {
     // 1. Inisialisasi dan Cek Batasan
@@ -706,7 +1016,7 @@ function initURLShortener() {
         let options = {};
         let shortUrlKey = '';
         let errorKey = '';
-        let successAction = () => {}; // Fungsi yang dijalankan saat sukses (misalnya increment hitungan)
+        let successAction = () => { }; // Fungsi yang dijalankan saat sukses (misalnya increment hitungan)
 
         switch (service) {
             case 'bitly':
@@ -738,14 +1048,14 @@ function initURLShortener() {
                 };
                 shortUrlKey = 'short_url';
                 break;
-            
+
             case 'isgd':
                 // Perhatian: Ini rentan terhadap masalah CORS (seperti yang Anda alami sebelumnya)
                 apiUrl = `https://is.gd/create.php?url=${encodeURIComponent(longUrl)}&format=json`;
                 options = { method: 'GET' };
                 shortUrlKey = 'shorturl';
                 break;
-            
+
             default:
                 throw new Error('Layanan pemendek URL tidak valid atau tidak dipilih.');
         }
@@ -778,11 +1088,11 @@ function initURLShortener() {
         shortenBtn.disabled = true;
         shortenBtn.textContent = `Memproses (${selectedService})...`;
         resultDiv.classList.add('hidden');
-        resultDiv.innerHTML = ''; 
+        resultDiv.innerHTML = '';
 
         try {
             const shortUrl = await executeShortening(selectedService, longUrl);
-            
+
             // Tampilkan Hasil Sukses
             resultDiv.innerHTML = `
                 <p class="text-sm font-medium mb-1">URL Pendek (${selectedService.toUpperCase()}):</p>
