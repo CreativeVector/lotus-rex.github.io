@@ -72,7 +72,7 @@
             const errorMessage = document.getElementById('error-message');
             errorMessage.textContent = '';
 
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await window.supabase.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
@@ -87,7 +87,7 @@
 
         // Cek sesi saat halaman dimuat
         async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await window.supabase.auth.getSession();
             if (session) {
                 // Jika sudah login, langsung redirect ke database
                 window.location.href = './database.html';
