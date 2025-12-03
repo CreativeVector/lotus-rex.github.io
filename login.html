@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Akses Database - Login</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script>
         tailwind.config = {
             theme: {
@@ -21,24 +19,25 @@
         }
     </script>
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script> 
+    
 </head>
-
 <body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
 
     <div id="login-container" 
-         class="bg-white p-8 md:p-10 rounded-xl shadow-2xl w-full max-w-md 
+         class="bg-white p-8 md:p-10 rounded-xl shadow-2xl w-full max-w-sm 
                 border border-gray-100 transform transition-all duration-300">
 
-        <div class="text-center mb-8">
-            <svg class="w-12 h-12 mx-auto text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10m0 0h16m0 0V7m0 10l-4-4m4 4l-4-4m-4-4l-4 4"></path></svg>
-            <h1 class="text-3xl font-extrabold text-gray-900 mt-3">Akses Database</h1>
-            <p class="text-gray-500 mt-1">Masuk untuk melanjutkan ke data sensitif.</p>
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Akses Database</h1>
+            <p class="text-gray-500 mt-1">Silakan masuk untuk melanjutkan.</p>
         </div>
 
-        <div class="space-y-5">
+        <form id="authForm" class="space-y-5">
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Alamat Email</label>
-                <input type="email" id="email" placeholder="contoh@domain.com" required
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" placeholder="email@contoh.com" required
                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg 
                               shadow-sm focus:outline-none focus:ring-primary focus:border-primary transition duration-150">
             </div>
@@ -50,52 +49,18 @@
                               shadow-sm focus:outline-none focus:ring-primary focus:border-primary transition duration-150">
             </div>
             
-            <p id="error-message" class="text-sm font-medium pt-2 text-red-600"></p>
+            <div id="authMessage" class="text-sm font-medium pt-2 text-center" style="display: none;"></div>
 
-            <button onclick="handleLogin()"
+            <button type="submit" id="submitButton"
                     class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg 
                            shadow-md text-base font-semibold text-white bg-primary hover:bg-primary-dark 
                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-200 ease-in-out">
-                Login
+                Log In
             </button>
-        </div>
+        </form>
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <script>
-        // login.js
-        async function handleLogin() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('error-message');
-            errorMessage.textContent = '';
-
-            const { data, error } = await window.supabase.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                errorMessage.textContent = 'Login Gagal: ' + error.message;
-            } else {
-                // Jika login berhasil, redirect ke halaman database
-                window.location.href = './database.html';
-            }
-        }
-
-        // Cek sesi saat halaman dimuat
-        async function checkSession() {
-            const { data: { session } } = await window.supabase.auth.getSession();
-            if (session) {
-                // Jika sudah login, langsung redirect ke database
-                window.location.href = './database.html';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', checkSession);
-    </script>
+    <script src="./script/login.js"></script>
 </body>
-
 </html>

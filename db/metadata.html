@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata Manager</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .tab-link {
+            padding: 10px 15px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #374151;
+        }
+
+        .tab-link.active {
+            border-bottom-color: #4f46e5;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+
+        #dataTable th {
+            cursor: pointer;
+            padding: 8px 12px;
+            background-color: #f1f1f1;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+
+        #dataTable td {
+            padding: 8px 12px;
+            border: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+
+        #dataTable .edited {
+            background-color: #fffde7;
+        }
+
+        #pagination button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f9f9f9;
+        }
+
+        #pagination button:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../config.js"></script>
+
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <header class="bg-white shadow-md">
+        <div class="container flex justify-between items-center py-4">
+            <h1 class="text-xl font-bold text-gray-900">Database Dashboard</h1>
+            <nav class="flex items-center space-x-4">
+                <a href="../database.html" class="tab-link">Home</a>
+                <a href="metadata.html" class="tab-link active">Metadata</a>
+                <a href="income.html" class="tab-link">Income</a>
+                <a href="notes.html" class="tab-link">Notes</a>
+                <button id="logoutBtn"
+                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded transition">
+                    Logout
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container pt-6">
+        <div class="card">
+            <h2 class="text-lg font-semibold" id="tableTitle">Metadata Manager</h2>
+            <p id="tableStatus" class="text-gray-500 mt-1">Pilih tabel untuk dimuat (Akses anonim).</p>
+
+            <label class="block mt-4 mb-2">Pilih Proyek (Tabel):</label>
+            <select id="tableSelector" class="p-2 border rounded w-full md:w-1/3">
+                <option value="Relax-4K">Relax-4K</option>
+                <option value="RendixAlextian">RendixAlextian</option>
+                <option value="KrasivArt">KrasivArt</option>
+                <option value="Krasiv-AI">Krasiv-AI</option>
+                
+            </select>
+
+            <div class="toolbar mt-4 flex gap-3">
+                <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterTable()"
+                    class="flex-grow p-2 border rounded">
+                <button onclick="addNewRow()"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition">
+                    ➕ Tambah Baris
+                </button>
+                <button onclick="syncChanges()"
+                    class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition">
+                    🔄 Sync Changes (<span id="pendingCount">0</span>)
+                </button>
+            </div>
+        </div>
+
+        <div class="card overflow-x-auto">
+            <div id="pagination" class="mb-4 text-center"></div>
+            <table id="dataTable" class="min-w-full divide-y divide-gray-200"></table>
+        </div>
+    </div>
+
+
+    <script>
+        // --- INISIALISASI ---
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentTable = 'Relax-4K';
+        let pendingUpdates = [];
+        let tableData = [];
+        let currentPage = 1;
+        const rowsPerPage = 20;
+
+        // --- INTI INISIALISASI HALAMAN (DIMUAT LANGSUNG) ---
+        function initializeMetadataPage() {
+            const selector = document.getElementById("tableSelector");
+
+            // Set tabel awal dan muat data
+            currentTable = selector.value;
+            loadTableData(currentTable);
+
+            // Pasang listener perubahan tabel
+            selector.addEventListener("change", () => {
+                currentTable = selector.value;
+                loadTableData(currentTable);
+            });
+        }
+
+        // --- MAIN EXECUTION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Panggil inisialisasi langsung tanpa cek autentikasi
+            initializeMetadataPage();
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        });
+
+    </script>
+    <script src="../script/db.js"></script>
+</body>
+
+</html>
