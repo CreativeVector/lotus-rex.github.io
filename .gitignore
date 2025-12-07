@@ -1,7 +1,5 @@
 .hintrc
 WebApp.code-workspace
-config.js
-pages/config.js
 .secrets
 run_local.sh
 run_local.ps1

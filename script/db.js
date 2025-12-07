@@ -1,3 +1,16 @@
+function trackUmamiEvent(eventName, details = {}) {
+  try {
+    if (window.umami && typeof window.umami.track === 'function') {
+      window.umami.track(eventName, details);
+      console.log('[Umami]', eventName, details);
+    } else {
+      console.warn('[Umami] Tracker not loaded yet');
+    }
+  } catch (err) {
+    console.error('[Umami] Tracking failed', err);
+  }
+}
+
 async function loadTableData(tbl) {
     document.getElementById("tableTitle").textContent = `${tbl} Manager`;
     document.getElementById("tableStatus").textContent = `Memuat data dari tabel '${tbl}'...`;
@@ -44,19 +57,30 @@ function renderTable(filtered = null) {
     rows.forEach(row => {
         const tr = table.insertRow();
         const isNewRow = row[pkCol] === null || row[pkCol] === undefined;
+        
+        // KRITIS: ID STABIL: Gunakan _tempId jika baris baru, jika tidak, gunakan PK asli
+        const rowIdentifier = isNewRow ? row._tempId : row[pkCol];
+        
         Object.keys(row).forEach(col => {
             const td = tr.insertCell();
+            
+            // Kolom PK hanya dapat diedit jika ini adalah Baris Baru
             if (col !== pkCol || isNewRow) {
                 td.contentEditable = true;
             }
             td.innerText = row[col] ?? '';
             td.className = 'py-4 px-6 whitespace-nowrap text-sm text-gray-900 border-b border-gray-200';
+            
             if (isNewRow) { tr.classList.add("bg-yellow-50"); }
-            const isPending = pendingUpdates.some(u => u.id === row[pkCol] && u.col === col);
+            
+            // Cek pending updates menggunakan ID STABIL
+            const isPending = pendingUpdates.some(u => u.id === rowIdentifier && u.col === col);
             if (isPending) { td.classList.add("edited"); }
 
             td.addEventListener("input", () => {
-                const pkValue = isNewRow ? `NEW_${Date.now()}` : row[pkCol];
+                // Gunakan rowIdentifier yang sudah didefinisikan di atas (STABIL)
+                const pkValue = rowIdentifier; 
+                
                 const existingIndex = pendingUpdates.findIndex(u => u.id === pkValue && u.col === col);
                 const updateObject = { 
                     id: pkValue, 
@@ -76,6 +100,7 @@ function renderTable(filtered = null) {
     });
 
     renderPagination(tbl.length);
+    trackUmamiEvent('table_view', { table: tbl });
 }
 
 // GANTI FUNGSI syncChanges yang sudah ada
@@ -216,16 +241,16 @@ function addNewRow() {
         return;
     }
 
-    // 1. Dapatkan kolom skema dari baris pertama (asumsi semua baris memiliki skema yang sama)
     const newRow = {};
     Object.keys(tableData[0]).forEach(key => {
-        // Atur nilai default ke null atau string kosong
         newRow[key] = null;
     });
+    
+    // KRITIS: TANDAI BARIS BARU DENGAN TEMPORARY ID STABIL HANYA SEKALI
+    newRow._tempId = `TEMP_ROW_${Math.random().toString(36).substring(2, 10)}`; 
 
-    // 2. Tambahkan ke data lokal. PK akan bernilai null/undefined.
-    tableData.unshift(newRow); // Tambahkan di bagian atas
-    currentPage = 1; // Kembali ke halaman 1 untuk melihat baris baru
+    tableData.unshift(newRow); 
+    currentPage = 1; 
     renderTable();
 
     document.getElementById("tableStatus").textContent = `Baris baru ditambahkan. Jangan lupa Sync!`;

@@ -7,9 +7,18 @@ const passwordInput = document.getElementById('password');
 const submitButton = document.getElementById('submitButton');
 const authMessage = document.getElementById('authMessage');
 
-// Pastikan objek 'supabase' tersedia (didefinisikan di config.js)
-// Kami mengandalkan global scope yang dibuat oleh config.js
-
+function trackUmamiEvent(eventName, details = {}) {
+  try {
+    if (window.umami && typeof window.umami.track === 'function') {
+      window.umami.track(eventName, details);
+      console.log('[Umami]', eventName, details);
+    } else {
+      console.warn('[Umami] Tracker not loaded yet');
+    }
+  } catch (err) {
+    console.error('[Umami] Tracking failed', err);
+  }
+}
 /**
  * Menampilkan pesan otentikasi di bawah tombol submit.
  * @param {string} message - Pesan yang akan ditampilkan.
@@ -98,6 +107,7 @@ function handleSubmit(e) {
     }
     
     signIn(email, password);
+    trackUmamiEvent('login_form_submitted');
 }
 
 /**
@@ -114,6 +124,7 @@ async function checkUserSession() {
         console.log('Pengguna sudah login:', session.user);
         // Redirect ke halaman database jika session aktif
         window.location.href = './database.html'; 
+        trackUmamiEvent('auto_redirect_logged_in_user');
     }
 }
 

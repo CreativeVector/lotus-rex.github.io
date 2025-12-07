@@ -13,73 +13,13 @@
     <link rel="manifest" href="/icon/site.webmanifest" />
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="f60d79dd-7473-44c3-99dd-c68242dc95ea"></script>
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="/db/db.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .card {
-            background-color: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .tab-link {
-            padding: 10px 15px;
-            font-weight: 500;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            color: #374151;
-        }
-
-        .tab-link.active {
-            border-bottom-color: #4f46e5;
-            color: #4f46e5;
-            font-weight: 600;
-        }
-
-        #dataTable th {
-            cursor: pointer;
-            padding: 8px 12px;
-            background-color: #f1f1f1;
-            text-align: left;
-            border-bottom: 2px solid #ddd;
-        }
-
-        #dataTable td {
-            padding: 8px 12px;
-            border: 1px solid #eee;
-            transition: background-color 0.2s;
-        }
-
-        #dataTable .edited {
-            background-color: #fffde7;
-        }
-
-        #pagination button {
-            padding: 5px 10px;
-            margin: 0 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            background-color: #f9f9f9;
-        }
-
-        #pagination button:hover {
-            background-color: #e0e0e0;
-        }
-    </style>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/config.js"></script>
+    <script src="/script/config.js"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
@@ -106,23 +46,28 @@
             <p id="tableStatus" class="text-gray-500 mt-1">Mengelola tabel Notes (Data dibatasi oleh RLS untuk user yang
                 terautentikasi).</p>
 
-            <div class="toolbar mt-4 flex gap-3">
+            <div class="toolbar mt-4 flex flex-col md:flex-row gap-3">
                 <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterTable()"
                     class="flex-grow p-2 border rounded">
+
                 <button onclick="addNewRow()"
                     class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition">
                     ➕ Tambah Baris
                 </button>
+
                 <button onclick="syncChanges()"
                     class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition">
-                    🔄 Sync Changes (<span id="pendingCount">0</span></span>)
+                    🔄 Sync Changes (<span id="pendingCount">0</span>)
                 </button>
             </div>
         </div>
 
         <div class="card overflow-x-auto">
             <div id="pagination" class="mb-4 text-center"></div>
-            <table id="dataTable" class="min-w-full divide-y divide-gray-200"></table>
+            <div class="table-responsive">
+                <table id="dataTable" class="min-w-full divide-y divide-gray-200"></table>
+            </div>
+
         </div>
     </div>
 
@@ -137,7 +82,6 @@
         let tableData = [];
         let currentPage = 1;
         const rowsPerPage = 20;
-        const maxVisiblePages = 5;
 
         // --- AUTENTIKASI DAN LOGOUT (RLS AKTIF) ---
         async function checkAuthAndRedirect() {
@@ -158,20 +102,27 @@
             else { alert("Logout gagal: " + error.message); }
         }
 
-        // --- TAMBAH BARIS (FUNGSI INI HILANG) ---
+        // --- TAMBAH BARIS (Menambahkan logic untuk ID sementara STABIL) ---
         function addNewRow() {
+            const newRow = {};
+
             if (!tableData.length) {
-                // Jika tabel kosong, kita asumsikan kolomnya adalah 'id' dan 'created_at'
-                const newRowFallback = { id: null, content: null, created_at: null };
-                tableData.unshift(newRowFallback);
+                // Fallback jika tabel benar-benar kosong dan tidak ada skema untuk ditiru
+                alert("Tabel kosong. Baris baru akan menggunakan skema default: id, created_at, content.");
+                newRow.id = null;
+                newRow.created_at = null;
+                newRow.content = 'Isi Catatan Baru';
             } else {
-                const newRow = {};
+                // Gunakan skema dari baris pertama
                 Object.keys(tableData[0]).forEach(key => {
                     newRow[key] = null;
                 });
-                tableData.unshift(newRow);
             }
 
+            // KRITIS: TANDAI BARIS BARU DENGAN TEMPORARY ID STABIL HANYA SEKALI
+            newRow._tempId = `TEMP_ROW_${Math.random().toString(36).substring(2, 10)}`;
+
+            tableData.unshift(newRow);
             currentPage = 1;
             renderTable();
 
@@ -222,15 +173,15 @@
                 // Cek apakah ini baris baru (PK bernilai null atau undefined)
                 const isNewRow = row[pkCol] === null || row[pkCol] === undefined;
 
+                // KRITIS: Gunakan _tempId yang STABIL jika ini baris baru, jika tidak gunakan PK asli
+                const rowIdentifier = isNewRow ? row._tempId : row[pkCol];
+                // Catatan: rowIdentifier sekarang adalah ID unik dan stabil untuk baris ini.
+
                 Object.keys(row).forEach(col => {
                     const td = tr.insertCell();
 
-                    // Kolom created_at tidak boleh diedit
                     const isSystemManaged = col === 'created_at';
 
-                    // Kolom dapat diedit jika:
-                    // 1. Bukan PK (kecuali baris baru) AND
-                    // 2. Bukan kolom yang dikelola sistem (created_at)
                     if ((col !== pkCol || isNewRow) && !isSystemManaged) {
                         td.contentEditable = true;
                     }
@@ -240,13 +191,15 @@
 
                     if (isNewRow) { tr.classList.add("bg-yellow-50"); }
 
-                    const isPending = pendingUpdates.some(u => u.id === row[pkCol] && u.col === col);
+                    // Gunakan rowIdentifier STABIL untuk mengecek pending updates
+                    const isPending = pendingUpdates.some(u => u.id === rowIdentifier && u.col === col);
                     if (isPending) { td.classList.add("edited"); }
 
                     td.addEventListener("input", () => {
-                        // Gunakan PK yang sebenarnya, atau PK sementara jika baris baru
-                        const pkValue = isNewRow ? `NEW_${Date.now()}` : row[pkCol];
+                        // FIX: pkValue sekarang menggunakan rowIdentifier yang STABIL, bukan Date.now()
+                        const pkValue = rowIdentifier;
 
+                        // Dengan pkValue yang stabil, findIndex ini akan bekerja dengan benar untuk UPDATE di pendingUpdates
                         const existingIndex = pendingUpdates.findIndex(u => u.id === pkValue && u.col === col);
 
                         const updateObject = {
@@ -281,7 +234,7 @@
             const newRowsToInsert = {};
             const existingUpdates = [];
 
-            // 1. Kategorisasi dan Pengelompokan Data
+            // 1. Kategorisasi dan Pengelompokan Data (Logika ini sudah benar karena update.id sekarang stabil)
             updatesToProcess.forEach(update => {
                 if (update.isNew) {
                     const tempId = update.id;
@@ -300,15 +253,16 @@
             for (const tempId in newRowsToInsert) {
                 const rowData = newRowsToInsert[tempId];
 
-                // FILTER: Buat payload baru tanpa kolom 'created_at' (Supabase akan mengisi otomatis)
                 const insertPayload = {};
                 for (const key in rowData) {
-                    if (key !== 'created_at' && rowData[key] !== null) {
+                    // Filter: Jangan kirim created_at atau nilai null
+                    if (key !== 'created_at' && rowData[key] !== null && rowData[key] !== '') {
                         insertPayload[key] = rowData[key];
                     }
                 }
 
                 if (Object.keys(insertPayload).length === 0) {
+                    console.warn(`Melewatkan baris baru ${tempId} karena kosong.`);
                     continue;
                 }
 
@@ -324,7 +278,6 @@
 
             // 3. PROSES UPDATE (Baris Lama)
             for (const update of existingUpdates) {
-                // SKIP UPDATE: created_at tidak boleh diupdate
                 if (update.col === 'created_at') {
                     continue;
                 }
@@ -352,13 +305,66 @@
             }
             document.getElementById("pendingCount").textContent = pendingUpdates.length;
         }
+
+        // --- PAGINATION DAN FILTER ---
+        function filterTable() {
+            const q = document.getElementById("searchInput").value.toLowerCase();
+            const filtered = tableData.filter(row =>
+                Object.values(row).some(value => String(value).toLowerCase().includes(q))
+            );
+            currentPage = 1;
+            renderTable(filtered);
+        }
+
+        function renderPagination(totalRows) {
+            const pages = Math.ceil(totalRows / rowsPerPage);
+            const pagination = document.getElementById("pagination");
+            pagination.innerHTML = "";
+
+            if (pages <= 1) return;
+
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(pages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // Tombol Previous
+            pagination.innerHTML += `
+                <button onclick="goToPage(${currentPage - 1})" 
+                        ${currentPage === 1 ? 'disabled' : ''}
+                        class="py-1 px-3 m-1 rounded text-sm bg-white border hover:bg-gray-200 disabled:opacity-50">
+                    &laquo; Prev
+                </button>
+            `;
+
+            // Nomor Halaman
+            for (let i = startPage; i <= endPage; i++) {
+                pagination.innerHTML += `
+                    <button onclick="goToPage(${i})" 
+                            class="py-1 px-3 m-1 rounded text-sm ${i === currentPage ? 'bg-indigo-600 text-white' : 'bg-white border hover:bg-gray-200'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            // Tombol Next
+            pagination.innerHTML += `
+                <button onclick="goToPage(${currentPage + 1})" 
+                        ${currentPage === pages ? 'disabled' : ''}
+                        class="py-1 px-3 m-1 rounded text-sm bg-white border hover:bg-gray-200 disabled:opacity-50">
+                    Next &raquo;
+                </button>
+            `;
+        }
         // --- MAIN EXECUTION ---
         document.addEventListener('DOMContentLoaded', () => {
             checkAuthAndRedirect();
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
         });
     </script>
-    <script src="../script/db.js"></script>
+    <script src="/script/db.js"></script>
 </body>
 
 </html>

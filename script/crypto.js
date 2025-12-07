@@ -164,7 +164,7 @@ function initCryptoTools() {
 
     // Default ke tab AES
     renderCryptoTab('aes');
-    
+
     // Event listener untuk tombol tab
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -188,7 +188,7 @@ function initCryptoTools() {
         });
 
         // Load content dan initialize
-        switch(tabKey) {
+        switch (tabKey) {
             case 'aes':
                 tabContentArea.innerHTML = AES_TAB_CONTENT;
                 initAesGcm();
@@ -307,7 +307,7 @@ function initWpfAes() {
     function encryptForWPF() {
         const text = encInput.value;
         const key = encKey.value;
-        
+
         if (!text || !key) {
             encOutput.value = "Error: Teks atau Kunci tidak boleh kosong.";
             return;
@@ -356,7 +356,7 @@ function initWpfAes() {
     // Event Listeners
     btnEncrypt.addEventListener('click', encryptForWPF);
     btnDecrypt.addEventListener('click', decryptFromWPF);
-    
+
     // Set nilai default untuk memudahkan testing
     encKey.value = '1234567890123456';
     encInput.value = 'Teks rahasia yang akan diuji.';
@@ -374,9 +374,9 @@ function initFileHash() {
             outputArea.value = 'Error: Pilih file terlebih dahulu.';
             return;
         }
-        
+
         outputArea.value = 'Menghitung hash...';
-        
+
         try {
             const buffer = await file.arrayBuffer();
             const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
