@@ -27,6 +27,7 @@ async function loadTableData(tbl) {
     } else {
         tableData = data;
         document.getElementById("tableStatus").textContent = `Berhasil memuat ${data.length} baris dari '${tbl}'.`;
+        trackUmamiEvent('table_load', { table: tbl, rowCount: data.length });
     }
 
     currentPage = 1;

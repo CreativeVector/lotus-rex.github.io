@@ -308,6 +308,7 @@
                 searchBtn.disabled = false;
                 if (btnText) btnText.textContent = 'Search Now';
             }
+            trackUmamiEvent('shutterstock-search', { query: query, types: selectedTypes.join(','), sort: sort, media: media });
         }
 
         searchInput.onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
@@ -317,6 +318,7 @@
             resultsGrid.innerHTML = '';
             if (!data || data.length === 0) {
                 resultsGrid.innerHTML = '<p class="col-span-full text-center py-20">Tidak ditemukan hasil untuk kategori ini.</p>';
+                trackUmamiEvent('shutterstock-no-results', {});
                 return;
             }
 
@@ -395,6 +397,7 @@
             const text = Array.from(selectedTagsSet).join(', ');
             navigator.clipboard.writeText(text);
             alert('Tags tersalin ke clipboard!');
+            trackUmamiEvent('copy-tags', { count: selectedTagsSet.size })
         };
 
         // MODAL LOGIC

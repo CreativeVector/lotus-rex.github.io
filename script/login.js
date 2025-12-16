@@ -8,16 +8,16 @@ const submitButton = document.getElementById('submitButton');
 const authMessage = document.getElementById('authMessage');
 
 function trackUmamiEvent(eventName, details = {}) {
-  try {
-    if (window.umami && typeof window.umami.track === 'function') {
-      window.umami.track(eventName, details);
-      console.log('[Umami]', eventName, details);
-    } else {
-      console.warn('[Umami] Tracker not loaded yet');
+    try {
+        if (window.umami && typeof window.umami.track === 'function') {
+            window.umami.track(eventName, details);
+            console.log('[Umami]', eventName, details);
+        } else {
+            console.warn('[Umami] Tracker not loaded yet');
+        }
+    } catch (err) {
+        console.error('[Umami] Tracking failed', err);
     }
-  } catch (err) {
-    console.error('[Umami] Tracking failed', err);
-  }
 }
 /**
  * Menampilkan pesan otentikasi di bawah tombol submit.
@@ -79,17 +79,16 @@ async function signIn(email, password) {
 
     if (error) {
         console.error('Login Error:', error.message);
-        // Tampilkan pesan error jika terjadi masalah otentikasi
+        trackUmamiEvent('login_failed', { error: error.message });
         showMessage(`Login Gagal: ${error.message}`, 'error');
     } else if (data.user) {
         showMessage('Login berhasil! Mengalihkan...', 'success');
-        
-        // Redirect ke halaman database setelah berhasil login
-        window.location.href = './database.html'; 
+        trackUmamiEvent('login_success', { user_id: data.user.id });
+        window.location.href = './database.html';
     } else {
         showMessage('Login selesai, tetapi data pengguna tidak ditemukan. Coba lagi.', 'info');
     }
-    trackUmamiEvent('login_attempt', { success: !error });
+
 }
 
 /**
@@ -105,9 +104,8 @@ function handleSubmit(e) {
         showMessage('Silakan masukkan email dan kata sandi Anda.', 'error');
         return;
     }
-    
+
     signIn(email, password);
-    trackUmamiEvent('login_form_submitted');
 }
 
 /**
@@ -117,13 +115,13 @@ async function checkUserSession() {
     if (typeof supabase === 'undefined') {
         return;
     }
-    
+
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (session) {
         console.log('Pengguna sudah login:', session.user);
         // Redirect ke halaman database jika session aktif
-        window.location.href = './database.html'; 
+        window.location.href = './database.html';
         trackUmamiEvent('auto_redirect_logged_in_user');
     }
 }
@@ -133,7 +131,7 @@ async function checkUserSession() {
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Cek session saat halaman dimuat (untuk mencegah login ganda)
     checkUserSession();
-    
+
     // 2. Pasang listener form untuk submit
     if (authForm) {
         authForm.addEventListener('submit', handleSubmit);

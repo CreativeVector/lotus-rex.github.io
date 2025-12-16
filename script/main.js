@@ -90,11 +90,13 @@ async function renderPage(pageKey) {
     if (pageKey === 'database') {
         const win = window.open('./login.html', '_blank');
         if (win) win.opener = null;
+        trackUmamiEvent('navigate', { page: pageKey });
         return;
     }
     if (pageKey === 'keyworder') {
         const win = window.open('pages/keyword-tool.html', '_blank');
         if (win) win.opener = null;
+        trackUmamiEvent('navigate', { page: pageKey });
         return;
     }
     const filePath = pageFiles[pageKey];
@@ -144,6 +146,7 @@ async function renderPage(pageKey) {
     } catch (error) {
         console.error("Kesalahan render halaman:", error);
         contentArea.innerHTML = `<div class="p-10 text-center text-red-500">Terjadi kesalahan: ${error.message}</div>`;
+        trackUmamiEvent('error', { page: pageKey, message: error.message });
     }
 }
 
